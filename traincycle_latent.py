@@ -1,3 +1,6 @@
+# Training cycle gan on latent vectors 
+
+
 import torch
 from dataset import CustomDataset
 import sys
@@ -93,10 +96,10 @@ def train_fn(syn_encoder,real_encoder,disc_H, disc_Z, gen_Z, gen_H, loader, opt_
 
 
 def main():
-    disc_H = Discriminator_l(config).to(config.DEVICE)
+    disc_H = Discriminator_l(config).to(config.DEVICE)        
     disc_Z = Discriminator_l(config).to(config.DEVICE)
-    gen_Z = Generator(config, num_residuals=5).to(config.DEVICE) #img_channels=3, num_residuals=9
-    gen_H = Generator(config, num_residuals=5).to(config.DEVICE)
+    gen_Z = Generator(config, num_residuals=5).to(config.DEVICE) #img_channels=3, num_residuals=9   # This is to generate real to unreal 
+    gen_H = Generator(config, num_residuals=5).to(config.DEVICE)  # this is to generate unreal to real
     syn_encoder = Encoder(config)
     real_encoder = Encoder(config)
     
