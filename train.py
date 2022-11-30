@@ -23,23 +23,23 @@ def train_fn(syn_encoder,real_encoder,disc_real, disc_fake, gen_fake, gen_real, 
     total_samples = len(loader)
     loop = tqdm(loader, leave=True)
     
-    for idx, (syn, real) in enumerate(loop):
+    for idx, (syn, real) in enumerate(loop):                         
         syn_image = syn.to(config.DEVICE, dtype=torch.float)
         real_image = real.to(config.DEVICE, dtype=torch.float)
-        syn = syn_encoder(syn_image)
-        real = real_encoder(real_image)
+        syn = syn_encoder(syn_image)                             # synthetic image latent vector from pretrained encoder
+        real = real_encoder(real_image)                          # real image latent vector from pretrained encoder
         with torch.cuda.amp.autocast():
-            fake_real = gen_real(syn)
-            D_H_real = disc_real(real)
-            D_H_fake = disc_real(fake_real.detach())
+            fake_real = gen_real(syn)                   # feeding latent in to generator (to generate synthetic to real latent representation)(B,256,16,16 --->B,256,16,16)
+            D_H_real = disc_real(real)                  
+            D_H_fake = disc_real(fake_real.detach())    
             H_reals += D_H_real.mean().item()
             H_fakes += D_H_fake.mean().item()
-            D_H_real_loss = mse(D_H_real, torch.ones_like(D_H_real))
-            D_H_fake_loss = mse(D_H_fake, torch.zeros_like(D_H_fake))
-            D_H_loss = D_H_real_loss + D_H_fake_loss
+            D_H_real_loss = mse(D_H_real, torch.ones_like(D_H_real))         # Disc loss for real latent
+            D_H_fake_loss = mse(D_H_fake, torch.zeros_like(D_H_fake))        # Disc loss to generated real latent(fake)
+            D_H_loss = D_H_real_loss + D_H_fake_loss 
 
             fake_syn = gen_fake(real)
-            D_Z_real = disc_fake(syn)
+            D_Z_real = disc_fake(syn)                     
             D_Z_fake = disc_fake(fake_syn.detach())
             D_Z_real_loss = mse(D_Z_real, torch.ones_like(D_Z_real))
             D_Z_fake_loss = mse(D_Z_fake, torch.zeros_like(D_Z_fake))
@@ -93,14 +93,15 @@ def train_fn(syn_encoder,real_encoder,disc_real, disc_fake, gen_fake, gen_real, 
 
 
 def main():
-    disc_real = Discriminator().to(config.DEVICE)
-    disc_fake = Discriminator().to(config.DEVICE)
-    gen_fake = Generator(config, num_residuals=5).to(config.DEVICE) #img_channels=3, num_residuals=9
-    gen_real = Generator(config, num_residuals=5).to(config.DEVICE)
+    disc_real = Discriminator().to(config.DEVICE)                       # disc_real is to discriminating the real instance and fake(generated real like) instance
+    disc_fake = Discriminator().to(config.DEVICE)                       # disc_real is to discriminating the synthetic instance and fake(generated synthetic like) instance  
+    gen_fake = Generator(config, num_residuals=5).to(config.DEVICE)     # Generator for synthetic to real representation
+    gen_real = Generator(config, num_residuals=5).to(config.DEVICE)     # Generator for real to synthetic representation
     syn_encoder = Encoder(config)
     real_encoder = Encoder(config)
     
-    if config.load_syn:
+    # loading pretrained encoders trained on synthetic and real 
+    if config.load_syn:                    
         checkpoint1 = torch.load(config.checkpoint1,map_location='cuda')
         l1 = ['encoder']
         pretrained_dict1 = {x.replace('encoder.',''):y for x,y in checkpoint1['model_state_dict'].items() if x.split('.',1)[0] in l1}
