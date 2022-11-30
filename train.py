@@ -8,7 +8,7 @@ import torch.optim as optim
 import config
 from tqdm import tqdm
 from torchvision.utils import save_image
-from Discriminator_latent import Discriminator
+from modules.Discriminator_latent import Discriminator
 from modules.generator_latent import Generator
 #from Generator import Generator
 from modules.model import Encoder,Decoder
